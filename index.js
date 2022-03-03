@@ -1,16 +1,14 @@
 const TelegramApi = require("node-telegram-bot-api");
-const mongoose = require("mongoose");
 const { startGameOptions } = require("./options");
-const token = "5019194207:AAHMx5B0hzgh1ysQmwG1B4paFiNAp3VawXw";
-const db =
-  "mongodb+srv://RomanUA:fsX5sbtfrLEUSpP@cluster0.k9f32.mongodb.net/Telegram_Bot?retryWrites=true&w=majority";
+
 const Game = require("./models/game_data.js");
 const Sticker = require("./models/sticker");
 
-mongoose
-  .connect(db)
-  .then((res) => console.log("mongoDB works"))
-  .catch((err) => console.log("mongoDB error"));
+const db = require('./db/data-base');
+
+const token = "5019194207:AAHMx5B0hzgh1ysQmwG1B4paFiNAp3VawXw";
+
+
 
 
 const bot = new TelegramApi(token, { polling: true });
