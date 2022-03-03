@@ -1,12 +1,22 @@
 const TelegramApi = require("node-telegram-bot-api");
-const { startGameOptions } = require('./options')
+const mongoose = require("mongoose");
+const { startGameOptions } = require("./options");
 const token = "5019194207:AAHMx5B0hzgh1ysQmwG1B4paFiNAp3VawXw";
+const db =
+  "mongodb+srv://RomanUA:fsX5sbtfrLEUSpP@cluster0.k9f32.mongodb.net/Telegram_Bot?retryWrites=true&w=majority";
+const Game = require("./models/game_data.js");
+const Sticker = require("./models/sticker");
+
+mongoose
+  .connect(db)
+  .then((res) => console.log("mongoDB works"))
+  .catch((err) => console.log("mongoDB error"));
+
 
 const bot = new TelegramApi(token, { polling: true });
 let gameData = {
   attemp: 0,
 };
-
 
 const start = () => {
   bot.setMyCommands([
@@ -21,10 +31,15 @@ const start = () => {
     const name = msg.chat.first_name;
 
     if (text === "/start") {
-      await bot.sendSticker(
-        chatId,
-        "https://tlgrm.ru/_/stickers/4dd/300/4dd300fd-0a89-3f3d-ac53-8ec93976495e/1.webp"
-      );
+      await Sticker.find()
+        .then((res) => {
+          const sticker = res[0].sticker;
+          bot.sendSticker(chatId, sticker);
+        })
+        .catch(() =>
+          bot.sendMessage(chatId, `Something went wrong. Try again`)
+        );
+
       return bot.sendMessage(
         chatId,
         `Hello ${name}! I am a telegram bot written by Roman Bishko?`
@@ -43,6 +58,7 @@ const start = () => {
         chatId,
         `Let's play game. I invente some number from 1 to 5, try to guess it`
       );
+
       return bot.sendMessage(
         chatId,
         "Would you like to play?",
@@ -52,13 +68,21 @@ const start = () => {
 
     if (gameData.gameMode && parseInt(text)) {
       gameData.attemp++;
+
       return gameData.number === +text
         ? (await bot.sendMessage(chatId, "Yes!!! You Guessed!!!"),
-          await bot.sendMessage(chatId, `You have used ${gameData.attemp} attemps`),
-          bot.sendMessage(chatId, "Would you like to play again?", startGameOptions)
-          )
+          await bot.sendMessage(
+            chatId,
+            `You have used ${gameData.attemp} attemps`
+          ),
+          bot.sendMessage(
+            chatId,
+            "Would you like to play again?",
+            startGameOptions
+          ))
         : bot.sendMessage(chatId, "No. Try againe...");
     }
+
     return bot.sendMessage(
       chatId,
       "I dont understand you, look available commands"
@@ -69,10 +93,17 @@ const start = () => {
     const chatId = msg.message.chat.id;
     const data = msg.data;
     if (data == "play") {
+      const attemp = 0;
       const randomNumber = Math.ceil(Math.random() * 5);
       gameData.gameMode = true;
       gameData.number = randomNumber;
-      gameData.attemp = 0;
+      gameData.attemp = attemp;
+    //   const game = new Game({});
+    //   game
+    //     .save()
+    //     .then((res) => console.log('start'))
+    //     .catch((err) => console.log("YO", err));
+
       bot.sendMessage(chatId, "Guess what");
     } else {
       gameData.gameMode = false;
